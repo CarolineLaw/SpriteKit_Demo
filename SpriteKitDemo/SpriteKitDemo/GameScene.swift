@@ -19,6 +19,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 
     private var playerNode = SKShapeNode()
     
+    private var realDest = CGPoint()
+
     override func didMove(to view: SKView) {
 
         self.playerNode = SKShapeNode.init(rectOf: CGSize.init(width: 50, height: 50), cornerRadius: 50 * 0.3)
@@ -27,8 +29,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 
         self.physicsBody = SKPhysicsBody(edgeLoopFrom: self.frame)
         self.physicsBody?.categoryBitMask = PhysicsCategory.wall
-//        self.physicsBody?.collisionBitMask = PhysicsCategory.projectile
-//        self.physicsBody?.contactTestBitMask = PhysicsCategory.projectile
+
+        self.name = "GameScene"
 
         setupBlocks()
 
@@ -52,6 +54,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         if offset.y < 0 { return }
 
         projectile.physicsBody = SKPhysicsBody(rectangleOf: projectile.frame.size)
+        projectile.physicsBody?.allowsRotation = false
         projectile.physicsBody?.isDynamic = true
         projectile.physicsBody?.affectedByGravity = false
         projectile.physicsBody?.categoryBitMask = PhysicsCategory.projectile
@@ -63,13 +66,13 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 
         let direction = offset.normalized()
 
-        let speed = direction * 2000
+        let speed = CGFloat(2000)
 
-        let realDest = speed + projectile.position
+        realDest = (direction * speed) + projectile.position
 
-        let actionMove = SKAction.move(to: realDest, duration: 2.5)
+        let actionMove = SKAction.applyForce(CGVector(dx: realDest.x / 100, dy: realDest.y / 100), duration: 2.5)
         let actionMoveDone = SKAction.removeFromParent()
-        projectile.run(SKAction.sequence([actionMove, actionMoveDone]))
+        projectile.run(SKAction.sequence([actionMove, actionMoveDone]), withKey: "move")
     }
 
     func didBegin(_ contact: SKPhysicsContact) {
@@ -77,6 +80,12 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
 
     func handle(_ contact: SKPhysicsContact) {
+        if contact.bodyA.node?.name == "GameScene" {
+            let applyForceAction = SKAction.applyForce(CGVector(dx: (-1 * realDest.x) / 100, dy: 10), duration: 1)
+            let actionMoveDone = SKAction.removeFromParent()
+            contact.bodyB.node?.run(SKAction.sequence([applyForceAction, actionMoveDone]), withKey: "move")
+        }
+
         if contact.bodyA.node?.parent == nil || contact.bodyB.node?.parent == nil {
             return
         }
