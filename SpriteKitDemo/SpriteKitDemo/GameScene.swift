@@ -15,11 +15,17 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     let rowCount = 5
     let colCount = 6
 
+    var numberOfProjectiles = 10
+
+    var numberOfProjectilesLabel = SKLabelNode()
+
     var contactQueue = [SKPhysicsContact]()
 
     private var playerNode = SKShapeNode()
     
     private var realDest = CGPoint()
+
+    var projectile = SKSpriteNode.init(color: .white, size: CGSize(width: 25, height: 25))
 
     override func didMove(to view: SKView) {
 
@@ -36,6 +42,10 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 
         physicsWorld.gravity = .zero
         physicsWorld.contactDelegate = self
+
+        numberOfProjectilesLabel.text = "\(numberOfProjectiles)"
+        numberOfProjectilesLabel.position = CGPoint(x: -320, y: 600)
+        addChild(numberOfProjectilesLabel)
     }
 
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -45,7 +55,10 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 
         let touchLocation = touch.location(in: self)
 
-        let projectile = SKSpriteNode.init(color: .white, size: CGSize(width: 25, height: 25))
+        if children.contains(projectile) {
+            return
+        }
+
         projectile.name = "Projectile"
         projectile.position = playerNode.position
 
@@ -61,6 +74,15 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         projectile.physicsBody?.contactTestBitMask = PhysicsCategory.block | PhysicsCategory.wall
         projectile.physicsBody?.collisionBitMask = PhysicsCategory.wall
         projectile.physicsBody?.usesPreciseCollisionDetection = true
+
+
+        numberOfProjectiles = numberOfProjectiles - 1
+
+        if numberOfProjectiles <= -1 {
+            return
+        }
+
+        numberOfProjectilesLabel.text = "\(numberOfProjectiles)"
 
         addChild(projectile)
 
